@@ -1,0 +1,4 @@
+redcode_tree_data:
+    path:     /tree/data
+    defaults: { _controller: RedCodeTreeBundle:TreeAdmin:treeData }
+
