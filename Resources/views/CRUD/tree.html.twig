@@ -32,13 +32,17 @@
                                 'stripes' : true
                             }
                         },
-                        'sort' : function(a, b) {
-                            return this.get_type(a) === this.get_type(b) ? (this.get_text(a) > this.get_text(b) ? 1 : -1) : (this.get_type(a) >= this.get_type(b) ? 1 : -1);
-                        },
                         'contextmenu' : {
                             'items' : function(node) {
                                 var tmp = $.jstree.defaults.contextmenu.items();
                                 delete tmp.ccp;
+                                tmp.edit = {
+                                    label: "Edit",
+                                    action: function(menu, data) {
+                                        var id = menu.reference.prevObject[0].getAttribute('id');
+                                        window.location.href = '{{ admin.generateUrl('edit', {'id': '{id}'}) }}'.replace(encodeURI('{id}'), id);
+                                    }
+                                };
                                 return tmp;
                             }
                         },
@@ -73,15 +77,6 @@
                         $.get('{{ path('redcode_tree_data', {'_sonata_admin': _sonata_admin}) }}&operation=rename_node', { 'id' : data.node.id, 'text' : data.text })
                                 .done(function (d) {
                                     data.instance.set_text(data.node, d.text);
-                                })
-                                .fail(function () {
-                                    data.instance.refresh();
-                                });
-                    })
-                    .on('move_node.jstree', function (e, data) {
-                        $.get('{{ path('redcode_tree_data', {'_sonata_admin': _sonata_admin}) }}&operation=move_node', { 'id' : data.node.id, 'parent_id' : data.parent })
-                                .done(function (d) {
-                                    data.instance.refresh();
                                 })
                                 .fail(function () {
                                     data.instance.refresh();
