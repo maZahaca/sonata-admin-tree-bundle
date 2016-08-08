@@ -69,6 +69,20 @@ class TreeAdminController extends CRUDController
                 );
 
                 return new JsonResponse($nodes);
+            case 'move_node':
+                $nodeId = $request->get('id');
+                $parentNodeId = $request->get('parent_id');
+                $node = $em->getRepository($this->admin->getClass())->find($nodeId);
+                $parentNode = $em->getRepository($this->admin->getClass())->find($parentNodeId);
+                $node->setParent($parentNode);
+                $this->admin->getModelManager()->update($node);
+
+                return new JsonResponse(
+                    [
+                        'id' => $node->getId(),
+                        'text' => $node->{'get'.ucfirst($this->admin->getTreeTextField())}(),
+                    ]
+                );
             case 'rename_node':
                 $nodeId = $request->get('id');
                 $nodeText = $request->get('text');
@@ -77,10 +91,12 @@ class TreeAdminController extends CRUDController
                 $node->{'set'.ucfirst($this->admin->getTreeTextField())}($nodeText);
                 $this->admin->getModelManager()->update($node);
 
-                return new JsonResponse([
-                    'id' => $node->getId(),
-                    'text' => $node->{'get'.ucfirst($this->admin->getTreeTextField())}()
-                ]);
+                return new JsonResponse(
+                    [
+                        'id' => $node->getId(),
+                        'text' => $node->{'get'.ucfirst($this->admin->getTreeTextField())}(),
+                    ]
+                );
             case 'create_node':
                 $parentNodeId = $request->get('parent_id');
                 $parentNode = $em->getRepository($this->admin->getClass())->find($parentNodeId);
@@ -90,10 +106,12 @@ class TreeAdminController extends CRUDController
                 $node->setParent($parentNode);
                 $this->admin->getModelManager()->create($node);
 
-                return new JsonResponse([
-                    'id' => $node->getId(),
-                    'text' => $node->{'get'.ucfirst($this->admin->getTreeTextField())}()
-                ]);
+                return new JsonResponse(
+                    [
+                        'id' => $node->getId(),
+                        'text' => $node->{'get'.ucfirst($this->admin->getTreeTextField())}(),
+                    ]
+                );
             case 'delete_node':
                 $nodeId = $request->get('id');
                 $node = $em->getRepository($this->admin->getClass())->find($nodeId);

@@ -2,83 +2,108 @@
 
 {% block stylesheets %}
     {{ parent() }}
-    <link href="{{ asset('bundles/redcodetree/css/style.min.css') }}" rel="stylesheet" type="text/css" media="all" />
+    <link href="{{ asset('bundles/redcodetree/css/style.min.css') }}" rel="stylesheet" type="text/css" media="all"/>
 {% endblock %}
 
 {% block javascripts %}
     {{ parent() }}
     <script src="{{ asset('bundles/redcodetree/js/jstree.min.js') }}"></script>
     <script type="text/javascript">
-        $(function () {
+        $(function() {
             $('#jstree_div')
                     .jstree({
-                        'core' : {
-                            'data' : {
-                                'url' : '{{ path('redcode_tree_data', {'_sonata_admin': _sonata_admin}) }}&operation=get_node',
-                                'data' : function (node) {
-                                    return { 'id' : node.id === '#' ? null : node.id };
+                        'core': {
+                            'data': {
+                                'url': '{{ path('redcode_tree_data', {'_sonata_admin': _sonata_admin}) }}&operation=get_node',
+                                'data': function(node) {
+                                    return {'id': node.id === '#' ? null : node.id};
                                 }
                             },
-                            'check_callback' : function(o, n, p, i, m) {
-                                if(m && m.dnd && m.pos !== 'i') { return false; }
-                                if(o === "move_node") {
-                                    if(this.get_node(n).parent === this.get_node(p).id) { return false; }
+                            'check_callback': function(o, n, p, i, m) {
+                                if (m && m.dnd && m.pos !== 'i') {
+                                    return false;
+                                }
+                                if (o === "move_node") {
+                                    if (this.get_node(n).parent === this.get_node(p).id) {
+                                        return false;
+                                    }
                                 }
                                 return true;
                             },
-                            'themes' : {
-                                'responsive' : false,
-                                'variant' : 'small',
-                                'stripes' : true
+                            'themes': {
+                                'responsive': false,
+                                'variant': 'small',
+                                'stripes': true
                             }
                         },
-                        'contextmenu' : {
-                            'items' : function(node) {
+                        'contextmenu': {
+                            'items': function(node) {
                                 var tmp = $.jstree.defaults.contextmenu.items();
                                 delete tmp.ccp;
                                 tmp.edit = {
                                     label: "Edit",
                                     action: function(menu, data) {
-                                        var id = menu.reference.prevObject[0].getAttribute('id');
-                                        window.location.href = '{{ admin.generateUrl('edit', {'id': '{id}'}) }}'.replace(encodeURI('{id}'), id);
+                                        var tree = $('#jstree_div').jstree(true);
+                                        var selectedNodes = tree.get_selected(true);
+                                        var id = selectedNodes[0].id
+                                        var editUrl = '{{ admin.generateUrl('edit', {'id': '{id}'}) }}'.replace(encodeURI('{id}'), id);
+
+                                        return start_field_dialog_form_edit_tree(editUrl, $('#jstree_div'));
                                     }
                                 };
                                 return tmp;
                             }
                         },
-                        'types' : {
-                            'default' : { 'icon' : 'fa fa-folder fa-fw' },
-                            'file' : { 'valid_children' : [], 'icon' : 'fa fa-file fa-fw' }
+                        'types': {
+                            'default': {'icon': 'fa fa-folder fa-fw'},
+                            'file': {'valid_children': [], 'icon': 'fa fa-file fa-fw'}
                         },
-                        'unique' : {
-                            'duplicate' : function (name, counter) {
+                        'unique': {
+                            'duplicate': function(name, counter) {
                                 return name + ' ' + counter;
                             }
                         },
-                        'plugins' : ['state','dnd','sort','types','contextmenu','unique']
+                        'plugins': ['state', 'dnd', 'sort', 'types', 'contextmenu', 'unique']
                     })
-                    .on('delete_node.jstree', function (e, data) {
-                        $.get('{{ path('redcode_tree_data', {'_sonata_admin': _sonata_admin}) }}&operation=delete_node', { 'id' : data.node.id })
-                                .fail(function () {
+                    .on('delete_node.jstree', function(e, data) {
+                        $.get('{{ path('redcode_tree_data', {'_sonata_admin': _sonata_admin}) }}&operation=delete_node', {'id': data.node.id})
+                                .fail(function() {
                                     data.instance.refresh();
                                 });
                     })
-                    .on('create_node.jstree', function (e, data) {
-                        $.get('{{ path('redcode_tree_data', {'_sonata_admin': _sonata_admin}) }}&operation=create_node', { 'type' : data.node.type, 'parent_id' : data.parent, 'text' : data.node.text })
-                                .done(function (d) {
+                    .on('create_node.jstree', function(e, data) {
+                        $.get('{{ path('redcode_tree_data', {'_sonata_admin': _sonata_admin}) }}&operation=create_node', {
+                                    'type': data.node.type,
+                                    'parent_id': data.parent,
+                                    'text': data.node.text
+                                })
+                                .done(function(d) {
                                     data.instance.set_id(data.node, d.id);
-                                    data.instance.set_text(data.node, d.text);
                                 })
-                                .fail(function () {
+                                .fail(function() {
                                     data.instance.refresh();
                                 });
                     })
-                    .on('rename_node.jstree', function (e, data) {
-                        $.get('{{ path('redcode_tree_data', {'_sonata_admin': _sonata_admin}) }}&operation=rename_node', { 'id' : data.node.id, 'text' : data.text })
-                                .done(function (d) {
+                    .on('rename_node.jstree', function(e, data) {
+                        $.get('{{ path('redcode_tree_data', {'_sonata_admin': _sonata_admin}) }}&operation=rename_node', {
+                                    'id': data.node.id,
+                                    'text': data.text
+                                })
+                                .done(function(d) {
                                     data.instance.set_text(data.node, d.text);
                                 })
-                                .fail(function () {
+                                .fail(function() {
+                                    data.instance.refresh();
+                                });
+                    })
+                    .on('move_node.jstree', function(e, data) {
+                        $.get('{{ path('redcode_tree_data', {'_sonata_admin': _sonata_admin}) }}&operation=move_node', {
+                                    'id': data.node.id,
+                                    'parent_id': data.parent
+                                })
+                                .done(function(d) {
+                                })
+                                .fail(function() {
                                     data.instance.refresh();
                                 });
                     });
@@ -90,6 +115,8 @@
     <div class="col-xs-12 col-md-12">
         <div id="jstree_div"></div>
     </div>
+    {% include 'SonataDoctrineORMAdminBundle:CRUD:edit_modal.html.twig' with {'id' : 'tree'} %}
+    {% include 'RedCodeTreeBundle:CRUD:modal_edit_association_script.html.twig' with {'id' : 'tree', 'admin' : admin} %}
 {% endblock %}
 
 {% block list_filters_actions %}
