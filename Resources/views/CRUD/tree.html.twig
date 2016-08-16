@@ -20,14 +20,6 @@
                                 }
                             },
                             'check_callback': function(o, n, p, i, m) {
-                                if (m && m.dnd && m.pos !== 'i') {
-                                    return false;
-                                }
-                                if (o === "move_node") {
-                                    if (this.get_node(n).parent === this.get_node(p).id) {
-                                        return false;
-                                    }
-                                }
                                 return true;
                             },
                             'themes': {
@@ -63,7 +55,7 @@
                                 return name + ' ' + counter;
                             }
                         },
-                        'plugins': ['state', 'dnd', 'sort', 'types', 'contextmenu', 'unique']
+                        'plugins': ['state', 'dnd', 'types', 'contextmenu', 'unique']
                     })
                     .on('delete_node.jstree', function(e, data) {
                         $.get('{{ path('redcode_tree_data', {'_sonata_admin': _sonata_admin}) }}&operation=delete_node', {'id': data.node.id})
@@ -99,7 +91,8 @@
                     .on('move_node.jstree', function(e, data) {
                         $.get('{{ path('redcode_tree_data', {'_sonata_admin': _sonata_admin}) }}&operation=move_node', {
                                     'id': data.node.id,
-                                    'parent_id': data.parent
+                                    'parent_id': data.parent,
+                                    'position': data.position
                                 })
                                 .done(function(d) {
                                 })
