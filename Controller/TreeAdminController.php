@@ -3,6 +3,7 @@
 namespace RedCode\TreeBundle\Controller;
 
 use Doctrine\ORM\EntityManager;
+use Gedmo\Tree\Entity\Repository\NestedTreeRepository;
 use Sonata\AdminBundle\Controller\CRUDController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
@@ -45,16 +46,18 @@ class TreeAdminController extends CRUDController
         $request = $this->getRequest();
         /** @var EntityManager $em */
         $em = $this->get('doctrine.orm.entity_manager');
+        /** @var NestedTreeRepository $repo */
+        $repo = $em->getRepository($this->admin->getClass());
 
         $operation = $request->get('operation');
         switch ($operation) {
             case 'get_node':
                 $nodeId = $request->get('id');
                 if ($nodeId) {
-                    $parentNode = $em->getRepository($this->admin->getClass())->find($nodeId);
-                    $nodes = $em->getRepository($this->admin->getClass())->getChildren($parentNode, true);
+                    $parentNode = $repo->find($nodeId);
+                    $nodes = $repo->getChildren($parentNode, true);
                 } else {
-                    $nodes = $em->getRepository($this->admin->getClass())->getRootNodes();
+                    $nodes = $repo->getRootNodes();
                 }
 
                 $nodes = array_map(
@@ -72,10 +75,32 @@ class TreeAdminController extends CRUDController
             case 'move_node':
                 $nodeId = $request->get('id');
                 $parentNodeId = $request->get('parent_id');
-                $node = $em->getRepository($this->admin->getClass())->find($nodeId);
-                $parentNode = $em->getRepository($this->admin->getClass())->find($parentNodeId);
+
+                $parentNode = $repo->find($parentNodeId);
+                $node = $repo->find($nodeId);
                 $node->setParent($parentNode);
+
                 $this->admin->getModelManager()->update($node);
+
+                $siblings = $repo->getChildren($parentNode, true);
+                $position = $request->get('position');
+                $i = 0;
+
+                foreach ($siblings as $sibling) {
+                    if ($sibling->getId() === $node->getId()) {
+                        break;
+                    }
+
+                    $i++;
+                }
+
+                $diff = $position - $i;
+
+                if ($diff > 0) {
+                    $repo->moveDown($node, $diff);
+                } else {
+                    $repo->moveUp($node, abs($diff));
+                }
 
                 return new JsonResponse(
                     [
@@ -86,7 +111,7 @@ class TreeAdminController extends CRUDController
             case 'rename_node':
                 $nodeId = $request->get('id');
                 $nodeText = $request->get('text');
-                $node = $em->getRepository($this->admin->getClass())->find($nodeId);
+                $node = $repo->find($nodeId);
 
                 $node->{'set'.ucfirst($this->admin->getTreeTextField())}($nodeText);
                 $this->admin->getModelManager()->update($node);
@@ -99,7 +124,7 @@ class TreeAdminController extends CRUDController
                 );
             case 'create_node':
                 $parentNodeId = $request->get('parent_id');
-                $parentNode = $em->getRepository($this->admin->getClass())->find($parentNodeId);
+                $parentNode = $repo->find($parentNodeId);
                 $nodeText = $request->get('text');
                 $node = $this->admin->getNewInstance();
                 $node->{'set'.ucfirst($this->admin->getTreeTextField())}($nodeText);
@@ -114,7 +139,7 @@ class TreeAdminController extends CRUDController
                 );
             case 'delete_node':
                 $nodeId = $request->get('id');
-                $node = $em->getRepository($this->admin->getClass())->find($nodeId);
+                $node = $repo->find($nodeId);
                 $this->admin->getModelManager()->delete($node);
 
                 return new JsonResponse();
