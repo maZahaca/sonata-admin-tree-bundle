@@ -44,8 +44,10 @@ class TreeAdminController extends CRUDController
     public function treeDataAction()
     {
         $request = $this->getRequest();
+        
+        $doctrine = $this->get('doctrine');
         /** @var EntityManager $em */
-        $em = $this->get('doctrine.orm.entity_manager');
+        $em = $doctrine->getManagerForClass($this->admin->getClass());
         /** @var NestedTreeRepository $repo */
         $repo = $em->getRepository($this->admin->getClass());
 
