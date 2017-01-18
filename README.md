@@ -23,10 +23,10 @@ https://github.com/Atlantic18/DoctrineExtensions/blob/master/doc/tree.md
 
 Install it via composer 
 ```bash
-composer install redcode/tree-bundle
+composer require redcode/tree-bundle
 ```
 
-Register the bundle in kernel `./app/AppKernel.php`
+Register the bundle in your app kernel `./app/AppKernel.php`
 ```php
 class AppKernel extends Kernel
 {
@@ -41,7 +41,7 @@ class AppKernel extends Kernel
 }
 ```
 
-Add following lines to the routing file `./app/config/routing.yml`
+Add the following lines to the routing file `./app/config/routing.yml`
 ```yml
 redcode_tree:
     resource: "@RedCodeTreeBundle/Resources/config/routing.yml"
@@ -49,7 +49,7 @@ redcode_tree:
 ```
 
 
-For the entity with enabled [Gedmo Nested Set](https://github.com/Atlantic18/DoctrineExtensions/blob/master/doc/tree.md) do following steps:
+For the entity with enabled [Gedmo Nested Set](https://github.com/Atlantic18/DoctrineExtensions/blob/master/doc/tree.md) follow these steps:
 
 Extend Admin class from `\RedCode\TreeBundle\Admin\AbstractTreeAdmin`
 ```php
@@ -67,7 +67,7 @@ class SubjectAdminController extends TreeAdminController
 }
 ```
 
-When registering admin as a service, you need to provide the fourth argument - the name of the field that will be shown in the tree. 
+When registering the admin as a service, you need to provide a fourth argument - the name of the field that will be shown in the tree. 
 ```yml
 app.admin.subject:
     class: AppBundle\Admin\SubjectAdmin
